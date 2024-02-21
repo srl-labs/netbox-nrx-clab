@@ -1,0 +1,67 @@
+{
+  "interface": [
+      {%- for interface_name, interface in interfaces.items() %}
+      {
+        "name": "{{interface_name}}",
+        "admin-state": "enable",
+        "subinterface": [
+          {
+            "index": 0,
+            "admin-state": "enable",
+            "ipv4": {
+              "admin-state": "enable",
+              {%- if interface.ip_addresses %}
+              "address": [
+                {%- for ip in interface.ip_addresses %}
+                {
+                  "ip-prefix": "{{ip}}"
+                }
+                {%- endfor %}
+              ]
+              {%- endif %}
+            }
+          }
+        ]
+      },
+      {%- endfor %}
+      {
+        "name": "lo0",
+        "admin-state": "enable",
+        "subinterface": [
+          {
+            "index": 0,
+            "admin-state": "enable",
+            "ipv4": {
+              "admin-state": "enable",
+              "address": [
+                {
+                  "ip-prefix": "{{device.primary_ip4.address}}"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+       "name": "mgmt0",
+       "admin-state": "enable",
+       "subinterface": [
+         {
+           "index": 0,
+           "admin-state": "enable",
+           "ip-mtu": 1500,
+           "ipv4": {
+             "admin-state": "enable",
+             "dhcp-client": {
+             }
+           },
+           "ipv6": {
+             "admin-state": "enable",
+             "dhcp-client": {
+             }
+           }
+         }
+       ]
+     }
+    ]
+  }

@@ -1,0 +1,10 @@
+        {{ name }}:
+            kind: vr-sros
+            {% if image is not defined %}
+            {% set image = "vrnetlab/vr-sros:23.10.R1" %}
+            license: /home/tim/licenses/sros23_vsim_license.txt
+            type: {{ model |default("sr1", true)}}
+            {% endif %}
+            {% include 'clab/node_params.j2' %}
+            {% include 'clab/labels.j2' %}
+

@@ -1,0 +1,118 @@
+{
+    "nokia-conf:port": [
+        {%- for interface_name, interface in interfaces.items() %}
+        {
+            "port-id" : "{{interface_name.replace("/", "\/")}}",
+            "admin-state": "enable",
+            "connector": {
+                "breakout": "c1-100g"
+            }
+        },
+        {
+            "port-id": "{{interface_name.replace("/", "\/")}}\/1",
+            "admin-state": "enable",
+            "ethernet": {
+                "lldp": {
+                    "dest-mac": [
+                        {
+                            "mac-type": "nearest-bridge",
+                            "receive": true,
+                            "transmit": true,
+                            "tx-tlvs": {
+                                "port-desc": true,
+                                "sys-name": true,
+                                "sys-desc": true,
+                                "sys-cap": true
+                            }
+                        }
+                    ]
+                }
+            }
+        }{{ ", " if not loop.last else "" }}
+        {%- endfor %}
+    ],
+    "nokia-conf:router": [
+        {
+            "router-name": "Base",
+            "autonomous-system": 65535,
+            "interface": [
+                {
+                    "interface-name": "loopback0",
+                    "admin-state": "enable",
+                    "loopback": [null],
+                    "ipv4": {
+                        "primary": {
+                            "address": "{{device.primary_ip4.address.split('/')[0]}}",
+                            "prefix-length": 32
+                        }
+                    }
+                },
+                {%- for interface_name, interface in interfaces.items() %}
+                {
+                    "interface-name": "to-{{interface.link_peers[0].device.name}}",
+                    "admin-state": "enable",
+                    "ip-mtu" : 1500,
+                    "port": "{{interface_name.replace("/", "\/")}}\/1",
+                    "ipv4": {
+                        "primary": {
+                            "address": "{{interface.ip_addresses[0].address.split("/")[0]}}",
+                            "prefix-length": 31
+                        }
+                    }
+                }{{ ", " if not loop.last else "" }}
+                {%- endfor %}
+            ],
+            "bgp": {
+                "admin-state": "enable",
+                "router-id": "{{device.primary_ip4.address.split('/')[0]}}",
+                "group": [
+                    {
+                        "group-name": "superspine",
+                        "admin-state": "enable",
+                        "peer-as": 65000,
+                        "family": {
+                            "ipv4": true,
+                            "ipv6": true
+                        }
+                    }
+                ],
+                "neighbor": [
+                    {%- for peer_name, peer in peers.items() %}
+                    {
+                        "ip-address": "{{peer.remote_ip.split('/')[0]}}",
+                        "admin-state": "enable",
+                        "description": "{{peer_name}}",
+                        "group": "superspine"
+                    }{{ ", " if not loop.last else "" }}
+                    {%- endfor %}
+                ]
+            },
+            "ospf": [
+                {
+                    "ospf-instance": 0,
+                    "admin-state": "enable",
+                    "router-id" : "{{device.primary_ip4.address.split('/')[0]}}",
+                    "area": [
+                        {
+                            "area-id": "0.0.0.0",
+                            "interface": [
+                                {%- for interface_name, interface in interfaces.items() %}
+                                {
+                                    "interface-name": "to-{{interface.link_peers[0].device.name}}",
+                                    "admin-state": "enable",
+                                    "interface-type": "point-to-point"
+                                },
+                                {%- endfor %}
+                                {
+                                    "interface-name": "loopback0",
+                                    "admin-state": "enable",
+                                    "interface-type": "point-to-point"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+type: platform_map
+version: v1
+platforms:
+  ubuntu:
+    kinds:
+      clab: linux
+  sr-linux:
+    kinds:
+      clab: srl
+  sros:
+    kinds:
+      clab: sros
+kinds:
+    linux:
+      nodes:
+        template: clab/nodes/default.j2
+        image: netreplica/ubuntu-host:latest
+        cmd: /start.sh -sS
+        exec:
+          - bash -c "echo root:root | chpasswd"
+      interface_names:
+        template: clab/interface_names/default.j2
+    srl:
+      nodes:
+        template: clab/nodes/srl.j2
+        type: ixrh4
+      interface_names:
+        template: clab/interface_names/srl.j2
+    sros:
+      nodes:
+        template: clab/nodes/sros.j2
+        type: sr-1s
+      interface_names:
+        template: clab/interface_names/sros.j2

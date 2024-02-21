@@ -1,0 +1,89 @@
+---
+version: '3.7'
+
+volumes:
+  netbox-media-files:
+  netbox-postgres-data:
+  netbox-redis-cache-data:
+  netbox-redis-data:
+  netbox-reports-files:
+  netbox-scripts-files:
+
+services:
+  # ------- 
+  # Netbox
+  # -------
+  netbox: &netbox
+    image: ghcr.io/netbox-community/netbox:latest
+    depends_on:
+    - postgres
+    - redis
+    - redis-cache
+    env_file: netbox.env
+    user: 'unit:root'
+    healthcheck:
+      start_period: 60s
+      timeout: 3s
+      interval: 15s
+      test: "curl -f http://localhost:8080/api/ || exit 1"
+    volumes:
+    - netbox-media-files:/opt/netbox/netbox/media:z,rw
+    - netbox-reports-files:/opt/netbox/netbox/reports:z,rw
+    - netbox-scripts-files:/opt/netbox/netbox/scripts:z,rw
+  
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/venv/bin/python
+    - /opt/netbox/netbox/manage.py
+    - rqworker
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q rqworker || exit 1"
+
+  netbox-housekeeping:
+    <<: *netbox
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+    - /opt/netbox/housekeeping.sh
+    healthcheck:
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      test: "ps -aux | grep -v grep | grep -q housekeeping || exit 1"
+
+  # postgres
+  postgres:
+    image: docker.io/postgres:15-alpine
+    env_file: postgres.env
+    volumes:
+    - netbox-postgres-data:/var/lib/postgresql/data
+    - ./netbox_seed.sql:/docker-entrypoint-initdb.d/netbox_seed.sql
+
+  # redis
+  redis:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: redis.env
+    volumes:
+    - netbox-redis-data:/data
+  
+  redis-cache:
+    image: docker.io/redis:7-alpine
+    command:
+    - sh
+    - -c # this is to evaluate the $REDIS_PASSWORD from the env
+    - redis-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+    env_file: redis-cache.env
+    volumes:
+    - netbox-redis-cache-data:/data

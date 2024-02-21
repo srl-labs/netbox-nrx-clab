@@ -1,0 +1,8 @@
+        {{ name }}:
+            kind: srl
+            {% if image is not defined %}
+            {% set image = "ghcr.io/nokia/srlinux:latest" %}
+            {% endif %}
+            type: {{ model | default("ixrd2", true)}} 
+            {% include 'clab/node_params.j2' %}
+            {% include 'clab/labels.j2' %}

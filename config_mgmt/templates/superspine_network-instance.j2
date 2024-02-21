@@ -1,0 +1,110 @@
+{%- set autonomous_system = "65000" %}
+{
+  "network-instance": [
+    {
+      "name": "mgmt",
+      "type": "ip-vrf",
+      "admin-state": "enable",
+      "description": "Management network instance",
+      "interface": [
+        {
+          "name": "mgmt0.0"
+        }
+      ],
+      "protocols": {
+        "linux": {
+          "import-routes": true,
+          "export-routes": true,
+          "export-neighbors": true
+        }
+      }
+    },
+    {
+      "name": "default",
+      "router-id": "{{device.primary_ip4.address.split('/')[0]}}",
+      "interface": [
+        {%- for interface_name, interface in interfaces.items() %}
+        {
+          "name": "{{interface_name}}.0"
+        },
+        {%- endfor %}
+        {
+          "name": "lo0.0"
+        }
+      ],
+      "protocols": {
+        "bgp": {
+          "admin-state": "enable",
+          "autonomous-system": {{autonomous_system}},
+          "router-id": "{{device.primary_ip4.address.split('/')[0]}}",
+          "afi-safi": [
+            {
+              "afi-safi-name": "evpn",
+              "admin-state": "enable"
+            },
+            {
+              "afi-safi-name": "ipv4-unicast",
+              "admin-state": "enable"
+            }
+          ],
+          "group": [
+            {%- for pod in pods %}
+            {
+              "group-name": "spine-pod{{pod}}",
+              "admin-state": "enable",
+              "peer-as": {{ "6500" + pod }}
+            },
+            {%- endfor %}
+            {
+              "group-name": "dc-gateway",
+              "admin-state": "enable",
+              "peer-as": 65535
+            }
+          ],
+          "neighbor": [
+            {%- for peer_name, peer in peers.items() %}
+            {
+              "description" : "{{peer_name}}",
+              "admin-state": "enable",
+              {%- if "dcgw" in peer_name %}
+              "peer-address": "{{peer.remote_ip.split('/')[0]}}",
+              "peer-group": "dc-gateway"
+              {%- endif %}
+              {%- if "-sp" in peer_name %}
+              "peer-address": "{{peer.remote_ip.split('/')[0]}}",
+              "peer-group": "{{ "spine-pod" + peer_name.split('-')[1][2] }}"
+              {%- endif %}
+            }{{ ", " if not loop.last else "" }}
+            {%- endfor %}
+          ]
+        },
+        "ospf": {
+          "instance": [
+            {
+              "name": "0",
+              "admin-state": "enable",
+              "version": "ospf-v2",
+              "area": [
+                {
+                  "area-id": "0.0.0.0",
+                  "interface": [
+                    {%- for interface_name, interface in interfaces.items() %}
+                    {
+                      "interface-name": "{{interface_name}}.0",
+                      "interface-type": "point-to-point"
+                    },
+                    {%- endfor %}
+                    {
+                      "interface-name": "lo0.0",
+                      "passive": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

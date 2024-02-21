@@ -1,0 +1,151 @@
+{%- set autonomous_system = "6500" + device.location.name.split(' ')[1] %}
+{
+  "network-instance": [
+    {
+      "name": "mgmt",
+      "type": "ip-vrf",
+      "admin-state": "enable",
+      "description": "Management network instance",
+      "interface": [
+        {
+          "name": "mgmt0.0"
+        }
+      ],
+      "protocols": {
+        "linux": {
+          "import-routes": true,
+          "export-routes": true,
+          "export-neighbors": true
+        }
+      }
+    },
+    {
+      "name": "default",
+      "router-id": "{{device.primary_ip4.address.split('/')[0]}}",
+      "interface": [
+        {%- for interface_name, interface in interfaces.items() %}
+        {
+          "name": "{{interface_name}}.0"
+        },
+        {%- endfor %}
+        {
+          "name": "lo0.0"
+        }
+      ],
+      "protocols": {
+        "bgp": {
+          "admin-state": "enable",
+          "autonomous-system": {{autonomous_system}},
+          "router-id": "{{device.primary_ip4.address.split('/')[0]}}",
+          "afi-safi": [
+            {
+              "afi-safi-name": "evpn",
+              "admin-state": "enable"
+            },
+            {
+              "afi-safi-name": "ipv4-unicast",
+              "admin-state": "enable"
+            }
+          ],
+          "group": [
+            {
+              "group-name": "spine-{{device.location.slug}}",
+              "admin-state": "enable",
+              "peer-as": {{autonomous_system}},
+              "afi-safi": [
+                {
+                  "afi-safi-name": "evpn",
+                  "admin-state": "enable"
+                },
+                {
+                  "afi-safi-name": "ipv4-unicast",
+                  "admin-state": "enable"
+                }
+              ],
+              "route-reflector": {
+                "cluster-id": 1
+              },
+              "send-community": {
+                "standard": true,
+                "large": true
+              },
+              "transport": {
+                "local-address" : "{{device.primary_ip4.address.split('/')[0]}}"
+              }
+            }
+          ],
+          "neighbor": [
+            {%- for peer_name, peer in peers.items() %}
+            {
+              "description" : "{{peer_name}}",
+              "peer-address": "{{peer.primary_ip4.split('/')[0]}}",
+              "admin-state": "enable",
+              "peer-group": "spine-{{device.location.slug}}"
+            }{{ ", " if not loop.last else "" }}
+            {%- endfor %}
+          ]
+        },
+        {%- if 'isis=initial' in device_tags or 'isis=final' in device_tags %}
+        "isis": {
+          "instance": [
+            {
+              "name": "0",
+              "admin-state": "enable",
+              "level-capability": "L2",
+              "net": [
+                "{{isis_address}}"
+              ],
+              "interface": [
+                {%- for interface_name, interface in interfaces.items() %}
+                {
+                  "interface-name": "{{interface_name}}.0",
+                  "circuit-type": "point-to-point"
+                },
+                {%- endfor %}
+                {
+                  "interface-name": "lo0.0",
+                  "passive": true
+                }
+              ],
+              "level": [
+                {
+                  "level-number": 2,
+                  "metric-style": "wide"
+                }
+              ]
+            }
+          ]
+        }{{ "," if 'isis=initial' in device_tags }}
+        {%- endif %}
+        {%- if 'isis=final' not in device_tags%}
+        "ospf": {
+          "instance": [
+            {
+              "name": "0",
+              "admin-state": "enable",
+              "version": "ospf-v2",
+              "area": [
+                {
+                  "area-id": "0.0.0.0",
+                  "interface": [
+                    {%- for interface_name, interface in interfaces.items() %}
+                    {
+                      "interface-name": "{{interface_name}}.0",
+                      "interface-type": "point-to-point"
+                    },
+                    {%- endfor %}
+                    {
+                      "interface-name": "lo0.0",
+                      "passive": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        {%- endif %}
+      }
+    }
+  ]
+}

@@ -4,6 +4,9 @@ Included in this lab are all the resources needed to deploy Netbox with seed dat
 
 The demo described below goes through deploying these components and an illustration of how you can use Netbox and Containerlab to test a real-world operational process (changing IGPs) without downtime.
 
+This is our sample network we'll be using:
+![Sample network with global OSPF backbone area](images/sample-network-initial.png)
+
 ## Requirements
 * Ubuntu 22.04.4 LTS (or newer) OS
 * Python 3.x (preferably 3.10) installed
@@ -139,6 +142,9 @@ The diffs in the above output should indicate to you what has changed. Try loggi
 
 ### 7 - Test a change using Netbox
 The scenario we want to test in this lab is migrating from OSPF as our IGP globally, to isolated IS-IS instances that exist within the pod only. This is much more scalable and will reduce the control-plane processing required when participating in a global OSPF process. 
+
+This is the final state we want to move to:
+![Sample network using IS-IS instances in each pod](images/sample-network-final.png)
 
 We will use device-level tagging in Netbox to inform our configuration management templates of which devices we want to change. 
 

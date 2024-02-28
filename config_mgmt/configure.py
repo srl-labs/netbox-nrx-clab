@@ -82,6 +82,12 @@ def main():
 
             # Write rendered configs to file
             config_path = os.path.join(args.config_path, f"{d.name}_{supp_templ}.json")
+            
+            # check configs dir exists, create if not
+            if not os.path.exists(args.config_path):
+                log_from_global(f"Config path doesn't exist, creating: {args.config_path}")
+                os.makedirs(args.config_path)
+
             with open(config_path, "w") as f_config:
                 log_for_device(d, "Writing config file to disk.", level=logging.DEBUG)
                 f_config.write(config)

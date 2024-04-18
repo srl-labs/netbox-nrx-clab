@@ -52,7 +52,7 @@ The output should show the NetReplica repo being cloned along with the nested te
 ### 3 - Install Netbox
 Install Netbox by running the following:
 ```
-> ./3_install_netbox.sh
+> ./3_deploy_netbox.sh
 ```
 This should take 2-3 minutes depending on your internet connection speed. If the script fails, run it again until it succeeds.
 You can check on the status of the Netbox install by running:

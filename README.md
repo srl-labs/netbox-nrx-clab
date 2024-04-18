@@ -33,13 +33,7 @@ We have tested this lab on the following software versions:
 
 Then install the python virtual environment by running:
 ```
-> ./1_create_venv.sh#!/bin/bash
-echo "--- Creating Python3 virtual Env ---"
-python3 -m venv venv
-source ./venv/bin/activate
-echo "--- Installing config management requirements ---"
-pip install -r ./config_mgmt/requirements.txt
-echo "Run: 'source venv/bin/activate' to activate the venv."
+> ./1_create_venv.sh
 ```
 
 Then activate the environment:

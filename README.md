@@ -33,13 +33,7 @@ We have tested this lab on the following software versions:
 
 Then install the python virtual environment by running:
 ```
-> ./1_create_venv.sh#!/bin/bash
-echo "--- Creating Python3 virtual Env ---"
-python3 -m venv venv
-source ./venv/bin/activate
-echo "--- Installing config management requirements ---"
-pip install -r ./config_mgmt/requirements.txt
-echo "Run: 'source venv/bin/activate' to activate the venv."
+> ./1_create_venv.sh
 ```
 
 Then activate the environment:
@@ -58,7 +52,7 @@ The output should show the NetReplica repo being cloned along with the nested te
 ### 3 - Install Netbox
 Install Netbox by running the following:
 ```
-> ./3_install_netbox.sh
+> ./3_deploy_netbox.sh
 ```
 This should take 2-3 minutes depending on your internet connection speed. If the script fails, run it again until it succeeds.
 You can check on the status of the Netbox install by running:

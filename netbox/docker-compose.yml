@@ -1,6 +1,4 @@
 ---
-version: '3.7'
-
 volumes:
   netbox-media-files:
   netbox-postgres-data:
@@ -14,7 +12,7 @@ services:
   # Netbox
   # -------
   netbox: &netbox
-    image: ghcr.io/netbox-community/netbox:latest
+    image: ghcr.io/netbox-community/netbox:v3.7.8
     depends_on:
     - postgres
     - redis

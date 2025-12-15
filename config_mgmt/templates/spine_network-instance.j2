@@ -40,7 +40,11 @@
           "afi-safi": [
             {
               "afi-safi-name": "evpn",
-              "admin-state": "enable"
+               "send-community-type": [
+                "standard",
+                "large"
+              ],
+             "admin-state": "enable"
             },
             {
               "afi-safi-name": "ipv4-unicast",
@@ -62,11 +66,7 @@
             {
               "group-name": "superspine",
               "admin-state": "enable",
-              "peer-as": 65000,
-              "send-community": {
-                "standard": true,
-                "large": true
-              }
+              "peer-as": 65000
             }
           ],
           "neighbor": [

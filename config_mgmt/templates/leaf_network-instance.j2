@@ -55,6 +55,10 @@
               "afi-safi": [
                 {
                   "afi-safi-name": "evpn",
+                  "send-community-type": [
+                    "standard",
+                    "large"
+                  ],
                   "admin-state": "enable"
                 },
                 {
@@ -65,11 +69,7 @@
               "route-reflector": {
                 "cluster-id": 1
               },
-              "send-community": {
-                "standard": true,
-                "large": true
-              },
-              "transport": {
+             "transport": {
                 "local-address" : "{{device.primary_ip4.address.split('/')[0]}}"
               }
             }
